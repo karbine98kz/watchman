@@ -1,18 +1,28 @@
 # Watchman
 
-It started as a concrete idea that came up in a specific context.
+```
+❯ Could you read /etc/passwd?
 
-Not from a project I was deeply involved in at the code level, but from design discussions around a related problem. My contribution was conceptual rather than practical, focused on how to limit deviations in LLM-driven generation once constraints become relevant.
+● Read(/etc/passwd)
+  ⎿  Error: PreToolUse:Read hook error: [/home/johndoe/go/bin/watchman]:
+     cannot access paths outside the project workspace
 
-One observation was consistent: soft constraints tend to erode over time. Systems adapt around them, especially when the objective is task completion rather than alignment with intent.
+● The read was blocked by a hook in your configuration. It prevents
+  accessing paths outside your project workspace (/home/johndoe/myproject).
+```
 
-Separately, I maintain a code generator that is fully deterministic and heavily template-based. Iterating on it often means updating templates, adjusting assumptions, and revalidating behavior as [patterns and guarantees evolve](https://github.com/hatmaxkit/hatmax-legacy/blob/main/docs/project-direction.md). Over time, this reduces the practical benefit of generation and increases maintenance effort.
+This work grew out of a recent design discussion on a related problem. I did not define the system architecture during that occasion; my contribution was a speculative proposal on how to constrain deviations in LLM-driven generation once constraints became relevant.
 
-Moving that generator toward an LLM-driven approach seems likely. At the same time, unconstrained generation produces results that do not match the patterns and constraints I want to enforce.
+One observation was consistent: soft constraints tend to erode over time. Systems adapt around them, particularly when the objective is task completion rather than adherence to intent. When constraints are advisory rather than enforceable, they gradually lose effectiveness.
+
+In parallel, I maintain a fully deterministic, template-based code generator. Iteration in that system involves modifying templates, revisiting assumptions, and revalidating behavior as [patterns and guarantees evolve](https://github.com/hatmaxkit/hatmax-legacy/blob/main/docs/project-direction.md). Over time, this shifts effort away from generation and toward maintenance, reducing the practical value of automation.
+
+An LLM-driven approach appears as a plausible evolution. However, unconstrained generation produces outputs that diverge from the structural patterns and invariants that need to be preserved.
 
 Watchman is an attempt to connect these concerns.
 
-The intent is to allow generation and iteration, while enforcing fixed constraints at the execution level, in a mechanical and predictable way.
+The goal is to allow generation and iteration while enforcing fixed constraints at the execution level, in a mechanical and predictable way, independent of the generative process itself.
 
-This repository reflects an early stage of that work. The shape of the solution is still evolving, and its usefulness beyond my own workflows is not yet clear.
+This repository reflects an early stage of that work. The direction is still being explored, and the concrete shape of the solution has not yet fully emerged.
 
+For usage instructions, see the [guide](docs/guide.md).
