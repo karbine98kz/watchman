@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/adrianpk/watchman/internal/config"
@@ -31,6 +32,14 @@ var filesystemTools = map[string]bool{
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "init":
+			runInit()
+			return
+		}
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		fatal("cannot load config: %v", err)
@@ -176,6 +185,63 @@ func extractGrepPaths(toolInput map[string]interface{}) []string {
 		return []string{p}
 	}
 	return nil
+}
+
+func runInit() {
+	local := len(os.Args) > 2 && os.Args[2] == "--local"
+
+	var configPath string
+	var configDir string
+
+	if local {
+		cwd, err := os.Getwd()
+		if err != nil {
+			fatal("cannot get working directory: %v", err)
+		}
+		configPath = filepath.Join(cwd, ".watchman.yml")
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			fatal("cannot get home directory: %v", err)
+		}
+		configDir = filepath.Join(home, ".config", "watchman")
+		configPath = filepath.Join(configDir, "config.yml")
+	}
+
+	if _, err := os.Stat(configPath); err == nil {
+		fmt.Printf("Config already exists: %s\n", configPath)
+		os.Exit(0)
+	}
+
+	if configDir != "" {
+		if err := os.MkdirAll(configDir, 0755); err != nil {
+			fatal("cannot create config directory: %v", err)
+		}
+	}
+
+	content := `version: 1
+
+rules:
+  workspace: true
+
+workspace:
+  allow:
+    - /tmp/
+  block: []
+
+commands:
+  block: []
+
+tools:
+  allow: []
+  block: []
+`
+
+	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
+		fatal("cannot write config: %v", err)
+	}
+
+	fmt.Printf("Created config: %s\n", configPath)
 }
 
 func allow() {

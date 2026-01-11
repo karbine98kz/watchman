@@ -12,16 +12,16 @@ import (
 // alwaysProtected contains paths that are NEVER accessible, regardless of config.
 // This is a hardcoded security boundary that cannot be overridden.
 var alwaysProtected = []string{
-	"~/.claude/",         // Claude settings, hooks
-	"~/.ssh/",            // SSH keys
-	"~/.aws/",            // AWS credentials
-	"~/.gnupg/",          // GPG keys
-	"~/.gpg/",            // GPG keys (alt)
-	"~/.config/gh/",      // GitHub CLI credentials
+	"~/.claude/",          // Claude settings, hooks
+	"~/.ssh/",             // SSH keys
+	"~/.aws/",             // AWS credentials
+	"~/.gnupg/",           // GPG keys
+	"~/.gpg/",             // GPG keys (alt)
+	"~/.config/gh/",       // GitHub CLI credentials
 	"~/.config/watchman/", // Watchman global config
-	"~/.netrc",           // Network credentials
-	"~/.git-credentials", // Git credentials
-	"~/go/bin/watchman",  // Watchman binary
+	"~/.netrc",            // Network credentials
+	"~/.git-credentials",  // Git credentials
+	"~/go/bin/watchman",   // Watchman binary
 }
 
 // protectedFilenames are filenames that are protected in any directory.

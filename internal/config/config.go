@@ -10,11 +10,11 @@ import (
 
 // Config represents the watchman configuration.
 type Config struct {
-	Version   int              `yaml:"version"`
-	Rules     RulesConfig      `yaml:"rules"`
-	Workspace WorkspaceConfig  `yaml:"workspace"`
-	Commands  CommandsConfig   `yaml:"commands"`
-	Tools     ToolsConfig      `yaml:"tools"`
+	Version   int             `yaml:"version"`
+	Rules     RulesConfig     `yaml:"rules"`
+	Workspace WorkspaceConfig `yaml:"workspace"`
+	Commands  CommandsConfig  `yaml:"commands"`
+	Tools     ToolsConfig     `yaml:"tools"`
 }
 
 // RulesConfig enables/disables semantic rules.

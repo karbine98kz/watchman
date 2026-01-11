@@ -11,6 +11,20 @@ Watchman uses a two-level configuration system: global defaults and local overri
 
 Local configuration can relax or tighten global rules per project.
 
+## Quick Setup
+
+Create config files with the `init` command:
+
+```bash
+# Create global config (~/.config/watchman/config.yml)
+watchman init
+
+# Create local config in current project (.watchman.yml)
+watchman init --local
+```
+
+If a config file already exists, the command does nothing.
+
 ## Structure
 
 ```yaml
