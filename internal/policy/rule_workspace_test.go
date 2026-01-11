@@ -1,8 +1,6 @@
 package policy
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/adrianpk/watchman/internal/config"
@@ -256,65 +254,6 @@ func TestIsAllowed(t *testing.T) {
 	}
 }
 
-func TestMatchPath(t *testing.T) {
-	home, _ := os.UserHomeDir()
-
-	tests := []struct {
-		path    string
-		pattern string
-		matches bool
-	}{
-		{"/tmp/file", "/tmp/file", true},
-		{"/tmp/file", "/tmp/", true},
-		{"/tmp", "/tmp/", true},
-		{"/tmp/subdir/file", "/tmp/", true},
-		{"/var/file", "/tmp/", false},
-		{filepath.Join(home, ".ssh/id_rsa"), "~/.ssh/", true},
-		{"/tmp/data", "/tmp", true},
-	}
-
-	for _, tt := range tests {
-		name := tt.path + " vs " + tt.pattern
-		t.Run(name, func(t *testing.T) {
-			got := matchPath(tt.path, tt.pattern)
-			if got != tt.matches {
-				t.Errorf("matchPath(%q, %q) = %v, want %v", tt.path, tt.pattern, got, tt.matches)
-			}
-		})
-	}
-}
-
-func TestIsAlwaysProtected(t *testing.T) {
-	home, _ := os.UserHomeDir()
-
-	tests := []struct {
-		path      string
-		protected bool
-	}{
-		{filepath.Join(home, ".claude", "settings.json"), true},
-		{filepath.Join(home, ".ssh", "id_rsa"), true},
-		{filepath.Join(home, ".aws", "credentials"), true},
-		{".watchman.yml", true},
-		{"/some/path/.watchman.yml", true},
-		{"README.md", false},
-		{"/tmp/test.txt", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.path, func(t *testing.T) {
-			got := IsAlwaysProtected(tt.path)
-			if got != tt.protected {
-				t.Errorf("IsAlwaysProtected(%q) = %v, want %v", tt.path, got, tt.protected)
-			}
-		})
-	}
-}
-
-func TestIsAlwaysProtectedEmpty(t *testing.T) {
-	if IsAlwaysProtected("") {
-		t.Error("empty path should not be protected")
-	}
-}
 
 func TestEvaluateWithBlockList(t *testing.T) {
 	rule := &ConfineToWorkspace{

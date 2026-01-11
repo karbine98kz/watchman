@@ -80,6 +80,9 @@ func TestMerge(t *testing.T) {
 			Allow: []string{"/tmp"},
 			Block: []string{".env"},
 		},
+		Scope: ScopeConfig{
+			Allow: []string{"src/**"},
+		},
 	}
 
 	overlay := &Config{
@@ -87,6 +90,10 @@ func TestMerge(t *testing.T) {
 		Workspace: WorkspaceConfig{
 			Allow: []string{"/var"},
 			Block: []string{"secrets/"},
+		},
+		Scope: ScopeConfig{
+			Allow: []string{"internal/**"},
+			Block: []string{"vendor/**"},
 		},
 		Commands: CommandsConfig{
 			Block: []string{"sudo"},
@@ -106,6 +113,12 @@ func TestMerge(t *testing.T) {
 	}
 	if len(base.Workspace.Block) != 2 {
 		t.Errorf("Workspace.Block = %v, want 2 items", base.Workspace.Block)
+	}
+	if len(base.Scope.Allow) != 2 {
+		t.Errorf("Scope.Allow = %v, want 2 items", base.Scope.Allow)
+	}
+	if len(base.Scope.Block) != 1 {
+		t.Errorf("Scope.Block = %v, want 1 item", base.Scope.Block)
 	}
 	if len(base.Commands.Block) != 1 {
 		t.Errorf("Commands.Block = %v, want 1 item", base.Commands.Block)

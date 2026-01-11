@@ -13,6 +13,7 @@ type Config struct {
 	Version   int             `yaml:"version"`
 	Rules     RulesConfig     `yaml:"rules"`
 	Workspace WorkspaceConfig `yaml:"workspace"`
+	Scope     ScopeConfig     `yaml:"scope"`
 	Commands  CommandsConfig  `yaml:"commands"`
 	Tools     ToolsConfig     `yaml:"tools"`
 }
@@ -29,6 +30,12 @@ type RulesConfig struct {
 
 // WorkspaceConfig controls the workspace confinement rule.
 type WorkspaceConfig struct {
+	Allow []string `yaml:"allow"`
+	Block []string `yaml:"block"`
+}
+
+// ScopeConfig controls which files can be modified.
+type ScopeConfig struct {
 	Allow []string `yaml:"allow"`
 	Block []string `yaml:"block"`
 }
@@ -107,6 +114,8 @@ func (c *Config) merge(overlay *Config) {
 	c.Rules = overlay.Rules
 	c.Workspace.Allow = appendUnique(c.Workspace.Allow, overlay.Workspace.Allow)
 	c.Workspace.Block = appendUnique(c.Workspace.Block, overlay.Workspace.Block)
+	c.Scope.Allow = appendUnique(c.Scope.Allow, overlay.Scope.Allow)
+	c.Scope.Block = appendUnique(c.Scope.Block, overlay.Scope.Block)
 	c.Commands.Block = appendUnique(c.Commands.Block, overlay.Commands.Block)
 	c.Tools.Allow = appendUnique(c.Tools.Allow, overlay.Tools.Allow)
 	c.Tools.Block = appendUnique(c.Tools.Block, overlay.Tools.Block)

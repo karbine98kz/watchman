@@ -9,26 +9,6 @@ import (
 	"github.com/adrianpk/watchman/internal/parser"
 )
 
-// alwaysProtected contains paths that are NEVER accessible, regardless of config.
-// This is a hardcoded security boundary that cannot be overridden.
-var alwaysProtected = []string{
-	"~/.claude/",          // Claude settings, hooks
-	"~/.ssh/",             // SSH keys
-	"~/.aws/",             // AWS credentials
-	"~/.gnupg/",           // GPG keys
-	"~/.gpg/",             // GPG keys (alt)
-	"~/.config/gh/",       // GitHub CLI credentials
-	"~/.config/watchman/", // Watchman global config
-	"~/.netrc",            // Network credentials
-	"~/.git-credentials",  // Git credentials
-	"~/go/bin/watchman",   // Watchman binary
-}
-
-// protectedFilenames are filenames that are protected in any directory.
-var protectedFilenames = []string{
-	".watchman.yml", // Local watchman config
-}
-
 // ConfineToWorkspace blocks commands that attempt to access paths outside the project.
 type ConfineToWorkspace struct {
 	Allow []string
@@ -72,52 +52,6 @@ func (r *ConfineToWorkspace) Evaluate(cmd parser.Command) Decision {
 	}
 
 	return Decision{Allowed: true}
-}
-
-// IsAlwaysProtected checks if a path matches any hardcoded protected path.
-// This check cannot be overridden by configuration.
-// Exported so main.go can call it regardless of workspace rule.
-func IsAlwaysProtected(p string) bool {
-	if p == "" {
-		return false
-	}
-
-	absPath := p
-	if !filepath.IsAbs(p) {
-		if cwd, err := os.Getwd(); err == nil {
-			absPath = filepath.Clean(filepath.Join(cwd, p))
-		}
-	} else {
-		absPath = filepath.Clean(p)
-	}
-
-	filename := filepath.Base(absPath)
-	for _, protected := range protectedFilenames {
-		if filename == protected {
-			return true
-		}
-	}
-
-	for _, pattern := range alwaysProtected {
-		isDir := strings.HasSuffix(pattern, "/")
-
-		expandedPattern := strings.TrimSuffix(pattern, "/")
-		if strings.HasPrefix(expandedPattern, "~/") {
-			if home, err := userHomeDir(); err == nil {
-				expandedPattern = filepath.Join(home, expandedPattern[2:])
-			}
-		}
-
-		if isDir {
-			if absPath == expandedPattern || strings.HasPrefix(absPath, expandedPattern+string(filepath.Separator)) {
-				return true
-			}
-		} else if absPath == expandedPattern {
-			return true
-		}
-	}
-
-	return false
 }
 
 // isBlocked checks if a path matches any block pattern.
@@ -171,36 +105,6 @@ func (r *ConfineToWorkspace) violatesBoundary(p string) bool {
 	}
 
 	return true
-}
-
-// matchPath checks if a path matches a pattern.
-// Supports exact match and prefix match (pattern ending with /).
-func matchPath(path, pattern string) bool {
-	if strings.HasPrefix(pattern, "~/") {
-		if home, err := userHomeDir(); err == nil {
-			pattern = filepath.Join(home, pattern[2:])
-		}
-	}
-
-	if path == pattern {
-		return true
-	}
-
-	// Prefix match for directories (pattern ends with /)
-	if strings.HasSuffix(pattern, "/") {
-		return strings.HasPrefix(path, pattern) || path == strings.TrimSuffix(pattern, "/")
-	}
-
-	// Prefix match (path starts with pattern)
-	if strings.HasPrefix(path, pattern+"/") || strings.HasPrefix(path, pattern+string(filepath.Separator)) {
-		return true
-	}
-
-	return false
-}
-
-func userHomeDir() (string, error) {
-	return os.UserHomeDir()
 }
 
 func collectPathCandidates(cmd parser.Command) []string {

@@ -95,6 +95,19 @@ func main() {
 		}
 	}
 
+	if cfg.Rules.Scope {
+		rule := policy.NewScopeToFiles(&cfg.Scope)
+		paths := extractPaths(input.ToolName, input.ToolInput)
+		for _, p := range paths {
+			parsed := parser.Command{Args: []string{p}}
+			decision := rule.Evaluate(input.ToolName, parsed)
+			if !decision.Allowed {
+				deny(decision.Reason)
+				return
+			}
+		}
+	}
+
 	allow()
 }
 
