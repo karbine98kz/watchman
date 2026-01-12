@@ -61,6 +61,9 @@ type CommitConfig struct {
 	MaxFiles         int    `yaml:"max_files"`
 	RequireUppercase bool   `yaml:"require_uppercase"`
 	NoPeriod         bool   `yaml:"no_period"`
+	RequirePeriod    bool   `yaml:"require_period"`
+	SingleLine       bool   `yaml:"single_line"`
+	ForbidColons     bool   `yaml:"forbid_colons"`
 	Conventional     bool   `yaml:"conventional"`
 	PrefixPattern    string `yaml:"prefix_pattern"`
 }
@@ -148,9 +151,9 @@ type NamingCheck struct {
 // RequiredCheck ensures certain files exist in directories.
 type RequiredCheck struct {
 	Name    string `yaml:"name"`
-	Dirs    string `yaml:"dirs"`              // Glob for directories to check
-	When    string `yaml:"when,omitempty"`    // Only check when this pattern exists
-	Require string `yaml:"require"`           // File that must exist
+	Dirs    string `yaml:"dirs"`           // Glob for directories to check
+	When    string `yaml:"when,omitempty"` // Only check when this pattern exists
+	Require string `yaml:"require"`        // File that must exist
 	Message string `yaml:"message,omitempty"`
 }
 

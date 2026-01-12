@@ -68,6 +68,8 @@ versioning:
     max_length: 0
     require_uppercase: false
     no_period: false
+    single_line: false
+    forbid_colons: false
     prefix_pattern: ""
   branches:
     protected: []

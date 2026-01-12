@@ -135,6 +135,27 @@ func (r *VersioningRule) EvaluateCommit(command string) Decision {
 		}
 	}
 
+	if r.Commit.RequirePeriod && !strings.HasSuffix(message, ".") {
+		return Decision{
+			Allowed: false,
+			Reason:  "commit message must end with period",
+		}
+	}
+
+	if r.Commit.SingleLine && strings.Contains(message, "\n") {
+		return Decision{
+			Allowed: false,
+			Reason:  "commit message must be single line (no body)",
+		}
+	}
+
+	if r.Commit.ForbidColons && strings.Contains(message, ":") {
+		return Decision{
+			Allowed: false,
+			Reason:  "commit message must not contain colons (no conventional commit prefixes)",
+		}
+	}
+
 	if r.Commit.PrefixPattern != "" {
 		re, err := regexp.Compile("^" + r.Commit.PrefixPattern)
 		if err == nil && !re.MatchString(message) {

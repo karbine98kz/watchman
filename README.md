@@ -27,6 +27,19 @@ Watchman is an attempt to connect these concerns.
 
 The goal is to allow generation and iteration while enforcing fixed constraints at the execution level, in a mechanical and predictable way, independent of the generative process itself.
 
-This repository reflects an early stage of that work. The direction is still being explored, and the concrete shape of the solution has not yet fully emerged.
+Watchman implements this through a hook system for Claude Code that enforces semantic rules: workspace confinement, scope restrictions, versioning policies, incremental change limits, and declarative invariants. Custom validation can be added via external hooks.
 
-For usage instructions, see the [guide](docs/guide.md).
+## Quick Start
+
+```bash
+go install github.com/adrianpk/watchman/cmd/watchman@latest
+watchman setup  # Configure Claude Code hook
+watchman init   # Create global config
+```
+
+## Documentation
+
+- [Configuration](docs/config.md) - Setup and rule configuration
+- [Rules](docs/rules.md) - Detailed rule documentation
+- [Invariants](docs/invariants.md) - Declarative structural checks
+- [Examples](examples/) - Sample configurations

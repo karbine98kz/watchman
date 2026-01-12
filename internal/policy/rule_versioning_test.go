@@ -246,6 +246,66 @@ func TestEvaluateCommit(t *testing.T) {
 			command:     `git commit -m "[JIRA-123] Add feature"`,
 			wantAllowed: true,
 		},
+		{
+			name: "require period fails",
+			rule: &VersioningRule{
+				Commit: config.CommitConfig{
+					RequirePeriod: true,
+				},
+			},
+			command:     `git commit -m "Message without period"`,
+			wantAllowed: false,
+		},
+		{
+			name: "require period passes",
+			rule: &VersioningRule{
+				Commit: config.CommitConfig{
+					RequirePeriod: true,
+				},
+			},
+			command:     `git commit -m "Message with period."`,
+			wantAllowed: true,
+		},
+		{
+			name: "single line fails with newline",
+			rule: &VersioningRule{
+				Commit: config.CommitConfig{
+					SingleLine: true,
+				},
+			},
+			command:     "git commit -m \"Subject\n\nBody text\"",
+			wantAllowed: false,
+		},
+		{
+			name: "single line passes",
+			rule: &VersioningRule{
+				Commit: config.CommitConfig{
+					SingleLine: true,
+				},
+			},
+			command:     `git commit -m "Single line message"`,
+			wantAllowed: true,
+		},
+		{
+			name: "forbid colons fails",
+			rule: &VersioningRule{
+				Commit: config.CommitConfig{
+					ForbidColons: true,
+				},
+			},
+			command:     `git commit -m "fix: bug in parser"`,
+			wantAllowed: false,
+		},
+		{
+			name: "forbid colons passes",
+			rule: &VersioningRule{
+				Commit: config.CommitConfig{
+					ForbidColons: true,
+				},
+			},
+			command:     `git commit -m "Fix bug in parser"`,
+			wantAllowed: true,
+		},
 	}
 
 	for _, tt := range tests {

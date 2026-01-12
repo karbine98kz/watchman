@@ -2,6 +2,21 @@
 
 Watchman enforces semantic rules that apply to all tools. Rules block intent, not specific tools.
 
+## Overview
+
+| Rule | Purpose | Status |
+|------|---------|--------|
+| [Workspace](#workspace) | Confine agent to project directory | Implemented |
+| [Scope](#scope) | Limit which files can be modified | Implemented |
+| [Versioning](#versioning) | Commit format and branch protection | Implemented |
+| [Incremental](#incremental) | Limit modified files before commit | Implemented |
+| [Invariants](#invariants) | Declarative structural checks | Implemented |
+| [Hooks](#hooks-external-hooks) | Custom validation via external programs | Implemented |
+| [Patterns](#patterns) | Match established code conventions | Via Hooks |
+| [Boundaries](#boundaries) | Enforce module dependency rules | Via Hooks |
+
+---
+
 ## Workspace
 
 **Status**: Implemented
@@ -172,6 +187,8 @@ versioning:
 | `max_length` | Maximum characters (0 = unlimited) |
 | `require_uppercase` | First character must be uppercase |
 | `no_period` | Must not end with period |
+| `single_line` | No body/description, subject only |
+| `forbid_colons` | No colons (blocks "fix:", "feat:", etc.) |
 | `prefix_pattern` | Regex pattern message must match |
 
 ### Branch Protection
@@ -232,6 +249,8 @@ Other VCS (mercurial, etc.) not yet supported.
 | `commit.max_length` | int | 0 | Max message length (0 = unlimited) |
 | `commit.require_uppercase` | bool | false | First char must be uppercase |
 | `commit.no_period` | bool | false | Must not end with period |
+| `commit.single_line` | bool | false | No body, subject line only |
+| `commit.forbid_colons` | bool | false | No colons (blocks conventional prefixes) |
 | `commit.prefix_pattern` | string | "" | Regex prefix pattern |
 | `branches.protected` | []string | [] | Branches that block commits |
 | `operations.block` | []string | [] | Git operations to block |
