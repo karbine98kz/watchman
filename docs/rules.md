@@ -242,9 +242,65 @@ Other VCS (mercurial, etc.) not yet supported.
 
 ## Incremental
 
-**Status**: Planned
+**Status**: Implemented
 
-Rejects large-scale rewrites in favor of small, incremental changes.
+Limits the number of files modified before requiring a commit or review.
+
+### Purpose
+
+Prevents large-scale rewrites by:
+- Tracking modified files via `git status`
+- Warning when approaching the limit
+- Blocking when the limit is reached
+
+This encourages small, reviewable changes and prevents runaway modifications.
+
+### Configuration
+
+```yaml
+rules:
+  incremental: true
+
+incremental:
+  max_files: 10
+  warn_ratio: 0.7
+```
+
+### Behavior
+
+| Modified Files | Action |
+|----------------|--------|
+| 0-6 (under 70%) | Silent, allowed |
+| 7-9 (70-99%) | Warning: "approaching file limit" |
+| 10+ (at limit) | Blocked: "commit or review before continuing" |
+
+### Warning vs Block
+
+The `warn_ratio` determines when warnings start:
+- `0.7` = warn at 70% of max (default)
+- `0.5` = warn at 50% of max
+- `0` = use default 70%
+
+Warnings give the agent runway to finish current work gracefully. Blocking forces a decision: commit, revert, or adjust the threshold.
+
+### Tools Affected
+
+| Tool | Incremental Applied |
+|------|---------------------|
+| `Read` | No (read-only) |
+| `Glob` | No (read-only) |
+| `Grep` | No (read-only) |
+| `Bash` | No |
+| `Write` | Yes |
+| `Edit` | Yes |
+| `NotebookEdit` | Yes |
+
+### All Options Reference
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_files` | int | 0 | Maximum modified files (0 = unlimited) |
+| `warn_ratio` | float | 0.7 | Ratio at which to start warning (0-1) |
 
 ---
 

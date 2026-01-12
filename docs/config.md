@@ -67,6 +67,10 @@ versioning:
   workflow: ""
   tool: ""
 
+incremental:
+  max_files: 0
+  warn_ratio: 0.7
+
 commands:
   block: []
 
@@ -84,7 +88,7 @@ Semantic rules apply to ALL tools. Blocking a rule blocks the *intent*, regardle
 | Confine to workspace | `workspace` | No access outside the project directory | Implemented |
 | Scope to defined files | `scope` | Limit modifications to explicitly declared files | Implemented |
 | Version control rules | `versioning` | Commit message format and branch protection | Implemented |
-| Require incremental changes | `incremental` | Reject large-scale rewrites in favor of small diffs | Planned |
+| Require incremental changes | `incremental` | Reject large-scale rewrites in favor of small diffs | Implemented |
 | Preserve key invariants | `invariants` | Block changes that violate structural rules | Planned |
 | Match established patterns | `patterns` | Ensure new code follows existing conventions | Planned |
 | Enforce explicit boundaries | `boundaries` | Respect module boundaries and dependency rules | Planned |
@@ -105,6 +109,21 @@ workspace:
     - .env
     - secrets/
 ```
+
+## Incremental Rule
+
+Limits how many files can be modified before requiring a commit or review.
+
+```yaml
+incremental:
+  # Maximum modified files (0 = unlimited)
+  max_files: 10
+
+  # Warn at this ratio of max (0.7 = warn at 70%)
+  warn_ratio: 0.7
+```
+
+Uses `git status` to track modified files. Warnings give the agent runway to wrap up; blocking forces a decision.
 
 ## Commands Control
 

@@ -1,22 +1,123 @@
-# Local config for watchman development
-# Disables restrictions for testing
+# Watchman Configuration Sample
+# Start restrictive, relax as needed by removing/commenting lines
+# Copy to .watchman.yml in your project root
+
 version: 1
 
 rules:
-  workspace: false
-  scope: false
-  incremental: false
-  invariants: false
-  patterns: false
-  boundaries: false
+  workspace: true      # Confine to project directory
+  scope: true          # Limit which files can be modified
+  versioning: true     # Enforce commit message rules
+  incremental: true    # Limit number of modified files
 
+# Workspace: control access outside project directory
 workspace:
-  allow: []
-  block: []
+  # Paths allowed outside workspace (uncomment as needed)
+  allow:
+    # - /tmp/
+    # - ~/.cache/go-build/
+  # Paths blocked even inside workspace
+  block:
+    - .env
+    - .env.local
+    - .env.production
+    - secrets/
+    - credentials/
+    - "*.pem"
+    - "*.key"
 
+# Scope: control which files can be modified
+scope:
+  # Only these patterns can be modified (empty = all allowed)
+  allow:
+    - src/**/*
+    - internal/**/*
+    - pkg/**/*
+    - cmd/**/*
+    - docs/**/*
+    - "*.go"
+    - "*.ts"
+    - "*.js"
+    - "*.py"
+    - "*.md"
+    - "*.yml"
+    - "*.yaml"
+    - "*.json"
+    - "*.toml"
+    - go.mod
+    - go.sum
+    - package.json
+    - package-lock.json
+    - requirements.txt
+    - Makefile
+    - Dockerfile
+    - .gitignore
+  # These patterns are always blocked
+  block:
+    - vendor/**
+    - node_modules/**
+    - dist/**
+    - build/**
+    - "**/*_generated.go"
+    - "**/*.gen.go"
+    - "**/*.pb.go"
+
+# Versioning: control commit behavior
+versioning:
+  commit:
+    max_length: 72           # Conventional limit
+    require_uppercase: true  # "Fix bug" not "fix bug"
+    no_period: true          # "Fix bug" not "Fix bug."
+    prefix_pattern: ""       # e.g., "\\[JIRA-\\d+\\]" for ticket refs
+  branches:
+    protected:
+      - main
+      - master
+      - release/*
+      - production
+  operations:
+    block:
+      - push --force
+      - push -f
+      - reset --hard
+  workflow: linear  # "linear" blocks merge, "merge" blocks rebase, "" = no restriction
+  tool: ""          # "jj" to prefer jj over git
+
+# Incremental: limit scope of changes
+incremental:
+  max_files: 10      # Block after modifying this many files
+  warn_ratio: 0.7    # Warn at 70% (7 files)
+
+# Commands: block dangerous shell commands
 commands:
-  block: []
+  block:
+    - sudo
+    - su
+    - "rm -rf /"
+    - "rm -rf ~"
+    - "rm -rf *"
+    - chmod
+    - chown
+    - mkfs
+    - dd
+    - "> /dev/"
+    - curl | sh
+    - curl | bash
+    - wget | sh
+    - wget | bash
 
+# Tools: control which Claude tools are allowed
 tools:
+  # If empty, all tools allowed. If set, ONLY these tools allowed.
   allow: []
+  # These tools are always blocked
   block: []
+  # Example: read-only mode
+  # allow:
+  #   - Read
+  #   - Glob
+  #   - Grep
+  # block:
+  #   - Bash
+  #   - Write
+  #   - Edit

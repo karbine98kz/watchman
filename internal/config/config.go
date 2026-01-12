@@ -10,13 +10,14 @@ import (
 
 // Config represents the watchman configuration.
 type Config struct {
-	Version    int              `yaml:"version"`
-	Rules      RulesConfig      `yaml:"rules"`
-	Workspace  WorkspaceConfig  `yaml:"workspace"`
-	Scope      ScopeConfig      `yaml:"scope"`
-	Versioning VersioningConfig `yaml:"versioning"`
-	Commands   CommandsConfig   `yaml:"commands"`
-	Tools      ToolsConfig      `yaml:"tools"`
+	Version     int               `yaml:"version"`
+	Rules       RulesConfig       `yaml:"rules"`
+	Workspace   WorkspaceConfig   `yaml:"workspace"`
+	Scope       ScopeConfig       `yaml:"scope"`
+	Versioning  VersioningConfig  `yaml:"versioning"`
+	Incremental IncrementalConfig `yaml:"incremental"`
+	Commands    CommandsConfig    `yaml:"commands"`
+	Tools       ToolsConfig       `yaml:"tools"`
 }
 
 // RulesConfig enables/disables semantic rules.
@@ -69,6 +70,12 @@ type OperationsConfig struct {
 // BranchesConfig controls branch protection.
 type BranchesConfig struct {
 	Protected []string `yaml:"protected"`
+}
+
+// IncrementalConfig controls change size limits.
+type IncrementalConfig struct {
+	MaxFiles  int     `yaml:"max_files"`
+	WarnRatio float64 `yaml:"warn_ratio"`
 }
 
 // CommandsConfig controls shell command filtering.
@@ -149,6 +156,7 @@ func (c *Config) merge(overlay *Config) {
 	c.Scope.Block = appendUnique(c.Scope.Block, overlay.Scope.Block)
 	c.Versioning = overlay.Versioning
 	c.Versioning.Branches.Protected = appendUnique(c.Versioning.Branches.Protected, overlay.Versioning.Branches.Protected)
+	c.Incremental = overlay.Incremental
 	c.Commands.Block = appendUnique(c.Commands.Block, overlay.Commands.Block)
 	c.Tools.Allow = appendUnique(c.Tools.Allow, overlay.Tools.Allow)
 	c.Tools.Block = appendUnique(c.Tools.Block, overlay.Tools.Block)

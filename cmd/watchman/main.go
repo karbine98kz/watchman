@@ -122,7 +122,27 @@ func main() {
 		}
 	}
 
+	if cfg.Rules.Incremental && isModificationTool(input.ToolName) {
+		rule := policy.NewIncrementalRule(&cfg.Incremental)
+		decision := rule.Evaluate()
+		if !decision.Allowed {
+			deny(decision.Reason)
+			return
+		}
+		if decision.Warning != "" {
+			warn(decision.Warning)
+		}
+	}
+
 	allow()
+}
+
+func isModificationTool(tool string) bool {
+	switch tool {
+	case "Write", "Edit", "NotebookEdit":
+		return true
+	}
+	return false
 }
 
 func isToolBlocked(cfg *config.Config, tool string) bool {
@@ -250,11 +270,35 @@ func runInit() {
 
 rules:
   workspace: true
+  scope: false
+  versioning: false
+  incremental: false
 
 workspace:
   allow:
     - /tmp/
   block: []
+
+scope:
+  allow: []
+  block: []
+
+versioning:
+  commit:
+    max_length: 0
+    require_uppercase: false
+    no_period: false
+    prefix_pattern: ""
+  branches:
+    protected: []
+  operations:
+    block: []
+  workflow: ""
+  tool: ""
+
+incremental:
+  max_files: 0
+  warn_ratio: 0.7
 
 commands:
   block: []
@@ -369,6 +413,10 @@ func allow() {
 func deny(reason string) {
 	fmt.Fprintln(os.Stderr, reason)
 	os.Exit(2)
+}
+
+func warn(message string) {
+	fmt.Fprintln(os.Stderr, "warning: "+message)
 }
 
 func fatal(format string, args ...interface{}) {

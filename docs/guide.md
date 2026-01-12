@@ -13,12 +13,12 @@ Seven archetypal rules were identified during initial design:
 | **Confine to workspace** | Implemented | No access outside the project directory |
 | **Scope to defined files** | Implemented | Limit modifications to explicitly declared files |
 | **Version control rules** | Implemented | Commit message format and branch protection |
-| **Require incremental changes** | Planned | Reject large-scale rewrites in favor of small, reviewable diffs |
+| **Require incremental changes** | Implemented | Reject large-scale rewrites in favor of small, reviewable diffs |
 | **Preserve key invariants** | Planned | Block changes that violate structural rules (naming, architecture) |
 | **Match established patterns** | Planned | Ensure new code follows existing conventions |
 | **Enforce explicit boundaries** | Planned | Respect module boundaries and dependency rules |
 
-Three rules are currently implemented. See [rules.md](rules.md) for detailed documentation.
+Four rules are currently implemented. See [rules.md](rules.md) for detailed documentation.
 
 ## What It Does
 

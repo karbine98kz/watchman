@@ -7,6 +7,7 @@ import "github.com/adrianpk/watchman/internal/parser"
 type Decision struct {
 	Allowed bool
 	Reason  string
+	Warning string
 }
 
 // Rule evaluates a command and returns a decision.
