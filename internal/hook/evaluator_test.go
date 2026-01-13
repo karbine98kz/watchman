@@ -479,3 +479,83 @@ func TestEvaluatorEvaluateMultipleHooks(t *testing.T) {
 		t.Error("expected second hook to deny")
 	}
 }
+
+func TestIsCommandInPosition(t *testing.T) {
+	tests := []struct {
+		cmd     string
+		pattern string
+		want    bool
+	}{
+		// Pattern should NOT match when embedded in path/argument
+		{"cd pkg/plp/middleware && go test", "dd", false},
+		{"echo add", "dd", false},
+		{"cat /path/to/odd/file", "dd", false},
+
+		// Pattern should match when in command position
+		{"dd if=/dev/zero of=file", "dd", true},
+		{"ls | dd of=file", "dd", true},
+		{"sudo apt install", "sudo", true},
+
+		// Additional edge cases
+		{"VAR=value dd if=/dev/zero", "dd", true},
+		{"echo 'dd is a command'", "dd", false},
+		{"ls && dd of=out", "dd", true},
+		{"ls; dd of=out", "dd", true},
+		{"ls || dd of=out", "dd", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.cmd, func(t *testing.T) {
+			got := isCommandInPosition(tt.cmd, tt.pattern)
+			if got != tt.want {
+				t.Errorf("isCommandInPosition(%q, %q) = %v, want %v", tt.cmd, tt.pattern, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSplitCommandSegments(t *testing.T) {
+	tests := []struct {
+		cmd  string
+		want int // number of segments
+	}{
+		{"ls", 1},
+		{"ls | grep foo", 2},
+		{"ls && pwd", 2},
+		{"ls || pwd", 2},
+		{"ls; pwd", 2},
+		{"ls | grep foo && pwd", 3},
+		{"echo 'hello | world'", 1}, // quoted pipe should not split
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.cmd, func(t *testing.T) {
+			got := len(splitCommandSegments(tt.cmd))
+			if got != tt.want {
+				t.Errorf("splitCommandSegments(%q) returned %d segments, want %d", tt.cmd, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractCommandName(t *testing.T) {
+	tests := []struct {
+		segment string
+		want    string
+	}{
+		{"ls -la", "ls"},
+		{"VAR=value cmd", "cmd"},
+		{"FOO=1 BAR=2 command arg", "command"},
+		{"  dd if=/dev/zero", "dd"},
+		{"'quoted cmd'", "quoted cmd"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.segment, func(t *testing.T) {
+			got := extractCommandName(tt.segment)
+			if got != tt.want {
+				t.Errorf("extractCommandName(%q) = %q, want %q", tt.segment, got, tt.want)
+			}
+		})
+	}
+}
