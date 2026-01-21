@@ -1,0 +1,475 @@
+# =============================================================================
+# Watchman Configuration for Go Projects
+# =============================================================================
+#
+# This is a comprehensive configuration for Go projects that enforces:
+# - Workspace confinement (no access outside project)
+# - Scope restrictions (limit which files can be modified)
+# - Version control policies (commit format, branch protection)
+# - Incremental changes (prevent large-scale rewrites)
+# - Structural invariants (content patterns, naming, imports)
+#
+# Place this file as .watchman.yml in your project root.
+# For global defaults, use ~/.config/watchman/config.yml
+#
+# =============================================================================
+
+version: 1
+
+# -----------------------------------------------------------------------------
+# RULES
+# -----------------------------------------------------------------------------
+# Enable/disable semantic rules. Each rule blocks *intent*, not specific tools.
+# A blocked rule prevents the action regardless of which tool attempts it.
+#
+# All rules default to false. Enable only what you need.
+# -----------------------------------------------------------------------------
+rules:
+  workspace: true      # Confine to project directory
+  scope: true          # Limit modifications to declared files
+  versioning: true     # Enforce commit format and branch protection
+  incremental: true    # Limit number of modified files
+  invariants: true     # Enforce structural patterns
+
+# -----------------------------------------------------------------------------
+# WORKSPACE
+# -----------------------------------------------------------------------------
+# Controls access to paths outside the project directory.
+#
+# By default, all paths outside the project root are blocked.
+# Use 'allow' to permit specific external paths (e.g., temp directories).
+# Use 'block' to deny specific paths even inside the project.
+#
+# Some paths are always protected regardless of configuration:
+#   ~/.claude/, ~/.ssh/, ~/.aws/, ~/.gnupg/, ~/.config/watchman/
+# -----------------------------------------------------------------------------
+workspace:
+  # Paths allowed outside the workspace
+  # Common use cases: build caches, test fixtures, shared tooling
+  allow:
+    - /tmp                    # Temporary files
+    - ~/.cache/go-build       # Go build cache
+    - ~/.cache/golangci-lint  # Linter cache
+
+  # Paths blocked inside the workspace
+  # Protect sensitive files from accidental modification
+  block:
+    - .env                    # Environment secrets
+    - .env.*                  # Environment variants
+    - "*.pem"                 # Certificates
+    - "*.key"                 # Private keys
+    - secrets/                # Secrets directory
+    - credentials/            # Credentials directory
+
+# -----------------------------------------------------------------------------
+# SCOPE
+# -----------------------------------------------------------------------------
+# Restricts which files can be modified within the workspace.
+#
+# If 'allow' is empty, all files can be modified (subject to other rules).
+# If 'allow' has patterns, ONLY matching files can be modified.
+# 'block' patterns take precedence over 'allow'.
+#
+# Read-only tools (Read, Glob, Grep) are not affected by scope.
+# -----------------------------------------------------------------------------
+scope:
+  # Files that CAN be modified
+  # Define the boundaries of where code changes are acceptable
+  allow:
+    - "*.go"                  # Go source files
+    - "*.mod"                 # Go modules
+    - "*.sum"                 # Go checksums
+    - "*.yaml"                # Config files
+    - "*.yml"                 # Config files
+    - "*.json"                # JSON configs
+    - "*.toml"                # TOML configs
+    - "*.md"                  # Documentation
+    - "*.sql"                 # Database migrations
+    - "*.sh"                  # Shell scripts
+    - Makefile                # Build file
+    - Dockerfile              # Container definition
+    - .gitignore              # Git ignore patterns
+    # Web development assets
+    - "*.html"                # HTML files
+    - "*.htm"                 # HTML files (alternate)
+    - "*.css"                 # Stylesheets
+    - "*.scss"                # Sass stylesheets
+    - "*.sass"                # Sass stylesheets
+    - "*.less"                # Less stylesheets
+    - "*.js"                  # JavaScript
+    - "*.ts"                  # TypeScript
+    - "*.jsx"                 # React JSX
+    - "*.tsx"                 # React TSX
+    - "*.vue"                 # Vue components
+    - "*.svelte"              # Svelte components
+    - "*.tmpl"                # Go templates
+    - "*.gohtml"              # Go HTML templates
+    - "*.svg"                 # SVG graphics
+
+  # Files that CANNOT be modified (overrides allow)
+  # Protect generated code, vendored dependencies, and sensitive configs
+  block:
+    - vendor/**               # Vendored dependencies (readonly)
+    - "**/*_generated.go"     # Generated code
+    - "**/*.pb.go"            # Protobuf generated
+    - "**/mock_*.go"          # Generated mocks
+    - "**/*_mock.go"          # Generated mocks (alternate naming)
+    - node_modules/**         # JS dependencies (if hybrid project)
+    - dist/**                 # Build output
+    - bin/**                  # Compiled binaries
+
+# -----------------------------------------------------------------------------
+# VERSIONING
+# -----------------------------------------------------------------------------
+# Controls commit message format and branch protection.
+#
+# Commit rules ensure consistent, readable git history.
+# Branch protection prevents accidental commits to main/release branches.
+# Workflow enforcement ensures consistent merge/rebase strategy.
+# -----------------------------------------------------------------------------
+versioning:
+  # Commit message validation
+  commit:
+    max_length: 50           # Short summary line
+    require_uppercase: true  # "Add feature" not "add feature"
+    no_period: true          # No trailing period (standard)
+    single_line: true        # No body/description, just the subject
+    forbid_colons: true      # No "fix:", "feat:", etc.
+
+  # Protected branches - direct commits blocked
+  branches:
+    protected:
+      - main
+      - master
+      - "release/*"          # Release branches
+      - "hotfix/*"           # Hotfix branches
+
+  # Blocked git operations
+  operations:
+    block:
+      - push                 # Prevent all pushes
+      - reset --hard         # Prevent hard reset (data loss)
+
+  # Workflow style (optional)
+  # "linear" - blocks merge, prefer rebase
+  # "merge"  - blocks rebase, prefer merge
+  workflow: linear
+
+  # Tool preference (optional)
+  # Set to "jj" to prefer jj over git
+  # tool: jj
+
+# -----------------------------------------------------------------------------
+# INCREMENTAL
+# -----------------------------------------------------------------------------
+# Limits the number of files that can be modified before requiring a commit.
+#
+# This prevents large-scale rewrites and encourages small, reviewable changes.
+# The agent receives warnings as it approaches the limit, then gets blocked.
+#
+# Uses `git status` to track modified files.
+# -----------------------------------------------------------------------------
+incremental:
+  max_files: 30              # Maximum modified files before blocking
+  warn_ratio: 0.7            # Start warning at 70% (7 files)
+
+# -----------------------------------------------------------------------------
+# INVARIANTS
+# -----------------------------------------------------------------------------
+# Declarative structural checks using regex and glob patterns.
+# Language-agnostic, no AST parsing required.
+#
+# Five check types:
+#   - coexistence: Ensure related files exist together
+#   - content: Validate file content patterns
+#   - imports: Restrict import statements (regex-based)
+#   - naming: Enforce file naming conventions
+#   - required: Ensure files exist in directories
+#
+# For AST-based checks, use external hooks instead.
+# -----------------------------------------------------------------------------
+invariants:
+  # ---------------------------------------------------------------------------
+  # COEXISTENCE
+  # ---------------------------------------------------------------------------
+  # Ensure related files exist together.
+  #
+  # Placeholders:
+  #   ${name} - Filename without extension (user.go -> user)
+  #   ${base} - For _test files, without suffix (user_test.go -> user)
+  #   ${ext}  - Extension with dot (user.go -> .go)
+  # ---------------------------------------------------------------------------
+  coexistence:
+    # Every test file must have a corresponding implementation
+    - name: "test-requires-implementation"
+      if: "**/*_test.go"
+      require: "${base}.go"
+      message: "Test file must have corresponding implementation file"
+
+  # ---------------------------------------------------------------------------
+  # CONTENT
+  # ---------------------------------------------------------------------------
+  # Validate file content against patterns.
+  #
+  # 'require' - Regex that MUST match somewhere in the file
+  # 'forbid'  - Regex that must NOT match anywhere in the file
+  #
+  # Path patterns support ! prefix for exclusion.
+  # ---------------------------------------------------------------------------
+  content:
+    # No TODO/FIXME in production code (tests are okay)
+    - name: "no-todos-in-production"
+      paths:
+        - "**/*.go"
+        - "!**/*_test.go"
+      forbid: "TODO|FIXME|HACK|XXX"
+      message: "Remove TODO/FIXME comments before committing"
+
+    # All Go files must have copyright header
+    # - name: "copyright-header"
+    #   paths:
+    #     - "**/*.go"
+    #   require: "^// Copyright"
+    #   message: "Go files must have copyright header"
+
+    # No hardcoded credentials
+    - name: "no-hardcoded-secrets"
+      paths:
+        - "**/*.go"
+        - "!**/*_test.go"
+      forbid: "(password|secret|api_key|apikey|token)\\s*[:=]\\s*[\"'][^\"']{8,}[\"']"
+      message: "Hardcoded credentials detected - use environment variables"
+
+    # No fmt.Print in production code (use proper logging)
+    - name: "no-fmt-print"
+      paths:
+        - "**/*.go"
+        - "!**/*_test.go"
+        - "!cmd/**/*.go"       # Allow in CLI entry points
+      forbid: "fmt\\.Print"
+      message: "Use structured logging instead of fmt.Print"
+
+    # No panic in library code
+    - name: "no-panic-in-libs"
+      paths:
+        - "internal/**/*.go"
+        - "pkg/**/*.go"
+        - "!**/*_test.go"
+      forbid: "panic\\("
+      message: "Return errors instead of panic in library code"
+
+    # No stdlib log calls - use Logger interface
+    - name: "no-stdlib-log-calls"
+      paths:
+        - "**/*.go"
+        - "!cmd/**/main.go"
+        - "!**/log/*.go"
+      forbid: "log\\.(Print|Printf|Println|Fatal|Fatalf|Fatalln|Panic|Panicf|Panicln)"
+      message: "Use Logger interface, not stdlib log"
+
+    # No "Failed to..." AI cliché in error messages
+    # Use "cannot" for inherent limitations, "error:" for execution failures
+    - name: "no-failed-prefix"
+      paths:
+        - "**/*.go"
+      forbid: "(fmt\\.Errorf|errors\\.New)\\s*\\(\\s*\"[Ff]ailed"
+      message: "Use 'cannot' for limitations or 'error:' for execution failures, not 'Failed to'"
+
+    # Error messages should start lowercase (Go style guide)
+    # Errors are often chained: fmt.Errorf("reading config: %w", err)
+    - name: "error-lowercase"
+      paths:
+        - "**/*.go"
+      forbid: "(fmt\\.Errorf|errors\\.New)\\s*\\(\\s*\"[A-Z]"
+      message: "Error messages should not be capitalized (Go style)"
+
+    # No ALTER TABLE in migrations (pre-release projects)
+    # Modify the original migration file instead of adding ALTER statements
+    - name: "no-alter-table-in-migrations"
+      paths:
+        - "**/migration*/**/*.sql"
+      forbid: "(?i)ALTER\\s+TABLE"
+      message: "Do not use ALTER TABLE in migrations. Modify the original migration file instead."
+
+  # ---------------------------------------------------------------------------
+  # IMPORTS
+  # ---------------------------------------------------------------------------
+  # Restrict import statements using regex.
+  #
+  # Note: This is regex-based, not AST. It matches the import path string.
+  # For precise AST analysis, use external hooks.
+  # ---------------------------------------------------------------------------
+  imports:
+    # Adapters should not import core domain
+    - name: "adapters-no-core"
+      paths:
+        - "adapters/**/*.go"
+        - "infrastructure/**/*.go"
+      forbid: '"[^"]*internal/core"'
+      message: "Adapters must not import core domain directly"
+
+    # No unsafe package
+    - name: "no-unsafe"
+      paths:
+        - "**/*.go"
+      forbid: '"unsafe"'
+      message: "unsafe package is not allowed"
+
+    # No reflection in domain code
+    - name: "no-reflect-in-domain"
+      paths:
+        - "internal/domain/**/*.go"
+        - "internal/core/**/*.go"
+      forbid: '"reflect"'
+      message: "Reflection not allowed in domain layer"
+
+    # No test imports in production code
+    - name: "no-test-imports"
+      paths:
+        - "**/*.go"
+        - "!**/*_test.go"
+      forbid: '"testing"'
+      message: "Testing package should only be imported in test files"
+
+    # No stdlib log - use Logger interface
+    - name: "no-stdlib-log"
+      paths:
+        - "**/*.go"
+        - "!cmd/**/main.go"
+        - "!**/log/*.go"
+      forbid: '"log"$'
+      message: "Use Logger interface, not stdlib log"
+
+  # ---------------------------------------------------------------------------
+  # NAMING
+  # ---------------------------------------------------------------------------
+  # Enforce file naming conventions.
+  #
+  # Pattern is a regex that the filename (not path) must match.
+  # ---------------------------------------------------------------------------
+  naming:
+    # Internal packages use snake_case
+    - name: "snake-case-internal"
+      paths:
+        - "internal/**/*.go"
+      pattern: "^[a-z][a-z0-9_]*\\.go$"
+      message: "Internal package files must use snake_case naming"
+
+    # Commands should only have main.go
+    - name: "cmd-main-only"
+      paths:
+        - "cmd/*/*.go"
+      pattern: "^main\\.go$"
+      message: "Command directories should only contain main.go"
+
+  # ---------------------------------------------------------------------------
+  # REQUIRED
+  # ---------------------------------------------------------------------------
+  # Ensure certain files exist in directories.
+  #
+  # 'dirs'    - Glob pattern for directories to check
+  # 'when'    - Only check when this pattern exists (optional)
+  # 'require' - File that must exist
+  # ---------------------------------------------------------------------------
+  required:
+    # Every package with Go files needs doc.go
+    - name: "doc-go-required"
+      dirs: "internal/**"
+      when: "*.go"
+      require: "doc.go"
+      message: "Packages must have doc.go for documentation"
+
+# -----------------------------------------------------------------------------
+# COMMANDS
+# -----------------------------------------------------------------------------
+# Blocks specific shell commands regardless of other rules.
+# This is a safety layer for commands that should never be executed.
+#
+# Applies to the Bash tool regardless of the underlying shell.
+# Pattern matching uses substring contains.
+# -----------------------------------------------------------------------------
+commands:
+  block:
+    - sudo                   # No privilege escalation
+    - "rm -rf /"             # Obvious
+    - "rm -rf ~"             # Protect home directory
+    - "rm -rf ."             # Protect current directory
+    - chmod                  # No permission changes
+    - chown                  # No ownership changes
+    - mkfs                   # No filesystem formatting
+    - dd                     # No raw disk operations
+    - "> /dev/"              # No writing to devices
+
+# -----------------------------------------------------------------------------
+# TOOLS
+# -----------------------------------------------------------------------------
+# Controls which Claude Code tools can be used.
+#
+# If 'allow' is empty, all tools are allowed.
+# If 'allow' has values, ONLY those tools are allowed.
+# 'block' always takes precedence.
+#
+# Available tools: Bash, Read, Write, Edit, Glob, Grep, NotebookEdit
+# -----------------------------------------------------------------------------
+tools:
+  # Allow all tools (default behavior when empty)
+  allow: []
+
+  # Block specific tools if needed
+  # Example: block Bash entirely for maximum safety
+  # block:
+  #   - Bash
+  block: []
+
+# -----------------------------------------------------------------------------
+# HOOKS
+# -----------------------------------------------------------------------------
+# External hooks for custom validation.
+#
+# Use hooks when you need:
+#   - AST analysis
+#   - Complex validation logic
+#   - Integration with external tools
+#   - Language-specific checks
+#
+# Hook protocol:
+#   Input (stdin):  JSON with tool_name, tool_input, paths, working_dir
+#   Output (stdout): JSON with decision (allow/deny/advise), reason/warning
+#   Alternative: Exit code 0 = allow, 1 = deny (stderr = reason)
+# -----------------------------------------------------------------------------
+hooks: []
+  # Example: Go AST check for cyclomatic complexity
+  # - name: "complexity-check"
+  #   command: "./scripts/check-complexity.sh"
+  #   tools: ["Write", "Edit"]
+  #   paths: ["**/*.go"]
+  #   timeout: 10s
+  #   on_error: allow
+
+  # Example: Lint check before write
+  # - name: "golint"
+  #   command: "./scripts/lint-check.sh"
+  #   tools: ["Write", "Edit"]
+  #   paths: ["**/*.go"]
+  #   timeout: 30s
+  #   on_error: allow
+
+# -----------------------------------------------------------------------------
+# REMINDERS
+# -----------------------------------------------------------------------------
+# Periodic reminders shown to the agent after N tool invocations or M minutes.
+#
+# Useful for:
+#   - Prompting re-read of AGENTS.md or project guidelines
+#   - Periodic check-ins or reviews
+#   - Any time-based or task-based notifications
+#
+# State is persisted in .watchman-state in the project directory.
+# Each reminder tracks its own counters independently.
+# Reminders never block operations, only advise.
+# -----------------------------------------------------------------------------
+reminders:
+  - name: "re-read-agents"
+    message: "STOP: You MUST read AGENTS.md now to refresh project guidelines. After reading, tell the user: 'I have re-read AGENTS.md.'"
+    every_tasks: 50      # Trigger every 50 tool invocations
+    every_minutes: 30    # Or every 30 minutes (whichever comes first)

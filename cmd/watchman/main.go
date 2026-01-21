@@ -38,7 +38,6 @@ func runCommand(cmd string) error {
 }
 
 func runHook() error {
-	// Constructor
 	cfg, err := config.Load()
 	if err != nil {
 		deny("watchman config error: " + err.Error())
@@ -47,31 +46,24 @@ func runHook() error {
 
 	evaluator := hook.NewEvaluator(cfg)
 
-	// Setup: parse input
 	var input hookInput
 	if err := json.NewDecoder(os.Stdin).Decode(&input); err != nil {
 		deny("watchman input error: " + err.Error())
 		return nil
 	}
 
-	// Start: evaluate
 	result := evaluator.Evaluate(hook.Input{
 		HookType:  input.HookType,
 		ToolName:  input.ToolName,
 		ToolInput: input.ToolInput,
 	})
 
-	// Output result
 	if !result.Allowed {
 		deny(result.Reason)
 		return nil
 	}
 
-	if result.Warning != "" {
-		warn(result.Warning)
-	}
-
-	allow()
+	allow(result.Warning)
 	return nil
 }
 
@@ -82,23 +74,39 @@ type hookInput struct {
 }
 
 type hookOutput struct {
-	Decision string `json:"decision"`
-	Reason   string `json:"reason,omitempty"`
+	HookSpecificOutput *hookSpecificOutput `json:"hookSpecificOutput,omitempty"`
 }
 
-func allow() {
-	json.NewEncoder(os.Stdout).Encode(hookOutput{Decision: "allow"})
+type hookSpecificOutput struct {
+	HookEventName      string `json:"hookEventName"`
+	PermissionDecision string `json:"permissionDecision"`
+	AdditionalContext  string `json:"additionalContext,omitempty"`
+	Reason             string `json:"reason,omitempty"`
+}
+
+func allow(additionalContext string) {
+	out := hookOutput{
+		HookSpecificOutput: &hookSpecificOutput{
+			HookEventName:      "PreToolUse",
+			PermissionDecision: "allow",
+			AdditionalContext:  additionalContext,
+		},
+	}
+	json.NewEncoder(os.Stdout).Encode(out)
 	os.Exit(0)
 }
 
 func deny(reason string) {
-	json.NewEncoder(os.Stdout).Encode(hookOutput{Decision: "block", Reason: reason})
+	out := hookOutput{
+		HookSpecificOutput: &hookSpecificOutput{
+			HookEventName:      "PreToolUse",
+			PermissionDecision: "deny",
+			Reason:             reason,
+		},
+	}
+	json.NewEncoder(os.Stdout).Encode(out)
 	fmt.Fprintln(os.Stderr, reason)
 	os.Exit(2)
-}
-
-func warn(message string) {
-	fmt.Fprintln(os.Stderr, "warning: "+message)
 }
 
 func fatal(format string, args ...interface{}) {

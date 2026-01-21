@@ -58,9 +58,9 @@ func (e *Evaluator) Evaluate(input Input) Result {
 		return Result{Allowed: false, Reason: "tool is not in allowed list: " + input.ToolName}
 	}
 
-	// Non-filesystem tools are always allowed
+	// Non-filesystem tools are always allowed (but still track reminders)
 	if !isFilesystemTool(input.ToolName) {
-		return Result{Allowed: true}
+		return e.withReminders(Result{Allowed: true})
 	}
 
 	// Check command blocklist for Bash
@@ -103,8 +103,10 @@ func (e *Evaluator) Evaluate(input Input) Result {
 
 	// Apply incremental rule
 	if e.cfg.Rules.Incremental && isModificationTool(input.ToolName) {
-		if result := e.evaluateIncremental(); !result.Allowed || result.Warning != "" {
+		if result := e.evaluateIncremental(); !result.Allowed {
 			return result
+		} else if result.Warning != "" {
+			return e.withReminders(result)
 		}
 	}
 
@@ -117,8 +119,10 @@ func (e *Evaluator) Evaluate(input Input) Result {
 
 	// Apply external hooks
 	if len(e.cfg.Hooks) > 0 {
-		if result := e.evaluateHooks(input); !result.Allowed || result.Warning != "" {
+		if result := e.evaluateHooks(input); !result.Allowed {
 			return result
+		} else if result.Warning != "" {
+			return e.withReminders(result)
 		}
 	}
 
@@ -254,6 +258,24 @@ func (e *Evaluator) evaluateReminders() Result {
 	}
 
 	return Result{Allowed: true}
+}
+
+// withReminders combines a result with any triggered reminders.
+// Should be called for all allowed operations to ensure reminders are tracked.
+func (e *Evaluator) withReminders(result Result) Result {
+	if !result.Allowed {
+		return result
+	}
+
+	reminderResult := e.evaluateReminders()
+	if reminderResult.Warning != "" {
+		if result.Warning != "" {
+			result.Warning = result.Warning + "; " + reminderResult.Warning
+		} else {
+			result.Warning = reminderResult.Warning
+		}
+	}
+	return result
 }
 
 func (e *Evaluator) isToolBlocked(tool string) bool {

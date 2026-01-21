@@ -89,8 +89,12 @@ func TestWatchmanAllowsRelativePaths(t *testing.T) {
 				t.Fatalf("cannot parse output: %v", err)
 			}
 
-			if output.Decision != "allow" {
-				t.Errorf("expected allow, got %s", output.Decision)
+			if output.HookSpecificOutput == nil || output.HookSpecificOutput.PermissionDecision != "allow" {
+				decision := ""
+				if output.HookSpecificOutput != nil {
+					decision = output.HookSpecificOutput.PermissionDecision
+				}
+				t.Errorf("expected allow, got %s", decision)
 			}
 		})
 	}
@@ -159,8 +163,12 @@ func TestWatchmanAllowsNonFilesystemTools(t *testing.T) {
 		t.Fatalf("cannot parse output: %v", err)
 	}
 
-	if output.Decision != "allow" {
-		t.Errorf("expected allow for non-filesystem tool, got %s", output.Decision)
+	if output.HookSpecificOutput == nil || output.HookSpecificOutput.PermissionDecision != "allow" {
+		decision := ""
+		if output.HookSpecificOutput != nil {
+			decision = output.HookSpecificOutput.PermissionDecision
+		}
+		t.Errorf("expected allow for non-filesystem tool, got %s", decision)
 	}
 }
 
@@ -190,8 +198,12 @@ func TestWatchmanAllowsReadRelativePath(t *testing.T) {
 		t.Fatalf("cannot parse output: %v", err)
 	}
 
-	if output.Decision != "allow" {
-		t.Errorf("expected allow, got %s", output.Decision)
+	if output.HookSpecificOutput == nil || output.HookSpecificOutput.PermissionDecision != "allow" {
+		decision := ""
+		if output.HookSpecificOutput != nil {
+			decision = output.HookSpecificOutput.PermissionDecision
+		}
+		t.Errorf("expected allow, got %s", decision)
 	}
 }
 
